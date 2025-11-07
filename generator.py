@@ -262,7 +262,24 @@ homeInsurance = [round(np.random.uniform(80, 200), 2) if status == 'Own'
                  else round(np.random.uniform(15, 35), 2) for status in housingStatus]
 
 # utilities
-def calculateUtilities(hh_size, workArrangement)
+def calculateUtilities(hh_size, workArrangement, region):
+    base = 120 + (hh_size * 25)
+    
+    # work from home = higher utilities
+    if workArrangement == 'Remote':
+        base *= 1.25
+    elif workArrangement == 'Hybrid':
+        base *= 1.1
+    
+    # regional variation
+    if region in ['Northeast', 'Midwest']:
+        base *= 1.15
+    elif region == 'South':
+        base *= 1.10
+    
+    return round(base * np.random.uniform(0.85, 1.15), 2)
+
+utilities = [calculateUtilities(h, w, r) for h, w, r in zip(household_size, workArrangement, )]
 
 
 
