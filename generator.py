@@ -279,7 +279,118 @@ def calculateUtilities(hh_size, workArrangement, region):
     
     return round(base * np.random.uniform(0.85, 1.15), 2)
 
-utilities = [calculateUtilities(h, w, r) for h, w, r in zip(household_size, workArrangement, )]
+utilities = [calculateUtilities(h, w, r) for h, w, r in zip(household_size, workArrangement, region)]
+
+# internet
+internet = [round(np.random.uniform(50, 120), 2) for _ in range(n)]
+
+# phone
+phone = [round(np.random.uniform(40, 150) * hh_size / 2, 2) for hh_size in household_size]
+
+# -- transportation -- 
+# car ownership (region & income dependent)
+
+def car(region, income, workArrangement):
+    if region in ['Northeast'] and income < 50000:
+        return np.random.choice([True, False], p=[0.7, 0.3])
+    elif workArrangement == 'Remote':
+        return np.random.choice([True, False], p=[0.85, 0.15])
+    else:
+        return np.random.choice([True, False], p=[0.92, 0.08])
+
+hasCar = [car(r, inc, w) for r, inc, w in zip(region, annualIncome, workArrangement)]
+
+# car payment
+def calculateCarPayment(hasCar, income, age):
+    if not hasCar:
+        return 0
+    
+    if np.random.random() > 0.4: # 40% have car payments
+        return 0
+    
+    # car payment (income depeedent)
+    avgPayment = (income / 12) * np.random.uniform(0.1, 0.2)
+    return round(avgPayment * np.random.uniform(0.7, 1.4), 2)
+
+carPayment = [calculateCarPayment(has, inc, a) for has, inc, a in zip(hasCar, annualIncome, ages)]
+
+# car insurance
+carInsurance = []
+for hasCar, age in zip(hasCar, ages):
+    if hasCar:
+        if age < 25:
+            carInsurance.append(round(np.random.uniform(200, 400), 2))
+        elif age < 65:
+            carInsurance.append(round(np.random.uniform(120, 250), 2))
+        else:
+            carInsurance.append(round(np.random.uniform(100, 200), 2))
+    else:
+        carInsurance.append(0)
+    
+# gas (work arrangement & car ownership dependent)
+def calculateGas(hasCar, workArrangement):
+    if not hasCar:
+        return 0
+    
+    if workArrangement == 'Remote':
+        return round(np.random.uniform(40, 80), 2)
+    elif workArrangement == 'Hybrid':
+        return round(np.random.uniform(100, 180), 2)
+    elif workArrangement in ['Office', 'PartTime']:
+        return round(np.random.uniform(150, 300), 2)
+    else:
+        return round(np.random.uniform(60, 120), 2)
+gas = [calculateGas(has, w) for has, w in zip(hasCar, workArrangement)]
+
+# public transit (non-car owners & urban dwellers)
+publicTransit = []
+for hasCar, reg in zip(hasCar, region):
+    if not hasCar:
+        publicTransit.append(round(np.random.uniform(80, 150), 2))
+    elif reg == 'Northeast' and np.random.random() < 0.30:
+        publicTransit.append(round(np.random.uniform(100, 200), 2))
+    else:
+        publicTransit.append(0)
+    
+# car maintenance (averaged monthly)
+carMaintenance = [round(np.random.uniform(50, 150), 2) if has else 0 for has in hasCar]
+
+# -- healthcare & insurance --
+# health insurance premiums
+def calculateHealthInsurance(career, income, hh_size):
+    if career in ['Retired']:
+        return round(np.random.uniform(150, 350) * hh_size / 2, 2)
+    elif career in ['PartTime', 'FoodService', 'Retail']:
+        if np.random.random() < 0.6:
+            return round(np.random.uniform(300, 800) * hh_size / 2, 2)
+        else:
+            return round(np.random.uniform(100, 250) * hh_size / 2, 2)
+    else:
+        return round(np.random.uniform(150, 450) * hh_size / 2, 2)
+    
+healthInsurance = [calculateHealthInsurance(car, inc, hh) for car, inc, hh in zip(career, annualIncome, household_size)]
+
+# out of pocket medical costs
+oopMedical = [round(np.random.uniform(50, 300), 2) for _ in range(n)]
+
+# dental/vision insurance
+dentalVision = [round(np.random.uniform(20, 80), 2) if np.random.random() < 0.65 else 0 for _ in range(n)]
+
+# life insurance 
+lifeInsurance = []
+for hh_type, inc in zip(household_type, annualIncome):
+    if hh_type in ['SmallFamily', 'SingleParent'] and inc > 50000:
+        if np.random.random() < 0.7:
+            lifeInsurance.append(round(np.random.uniform(50, 200), 2))
+        else:
+            lifeInsurance.append(0)
+    elif inc > 80000 and np.random.random() < 0.5:
+        lifeInsurance.append(round(np.random.uniform(30, 150), 2))
+    else:
+        lifeInsurance.append(0)
+    
+# -- debt payments --
+    
 
 
 
