@@ -390,9 +390,216 @@ for hh_type, inc in zip(household_type, annualIncome):
         lifeInsurance.append(0)
     
 # -- debt payments --
+# student loans (education & age dependent)
+def calculateStudentLoans(edu, age, income):
+    if edu in ['High School']:
+        return 0
+    elif edu == "Some College/Associate's":
+        if np.random.random() < 0.4 and age < 50:
+            return round(np.random.uniform(100, 300), 2)
+        return 0
+    elif edu == "Bachelor's":
+        if np.random.random() < 0.6 and age < 45:
+            return round(np.random.uniform(200, 500), 2)
+        elif np.random.random() < 0.3 and age < 55:
+            return round(np.random.uniform(150, 300), 2)
+        return 0
+    elif edu == "Master's":
+        if np.random.random() < 0.7 and age < 50:
+            return round(np.random.uniform(300, 800), 2)
+        elif np.random.random() < 0.4 and age < 60:
+            return round(np.random.uniform(200, 500), 2)
+        return 0
+    else:
+        if np.random.random() < 0.5 and age < 55:
+            return round(np.random.uniform(200, 600), 2)
+        return 0
+studentLoans = [calculateStudentLoans(e, a, inc) for e, a, inc in zip(education, ages, annualIncome)]
+
+# credit card debt payments
+def calculateCCPayment(income, age):
+    if np.random.random() < 0.45:
+        avgPayment = (income / 12) * np.random.uniform(0.03, 0.12)
+        return round(avgPayment, 2)
+    return round(np.random.uniform(0, 50), 2)
+ccPayment = [calculateCCPayment(inc, a) for inc, a in zip(annualIncome, ages)]
+
+# personal loans
+personalLoans = [round(np.random.uniform(150, 500), 2) if np.random.random() < 0.15 else 0 for _ in range(n)]
+
+# medical debt
+medicalDebt = []
+for inc in annualIncome:
+    if inc < 40000 and np.random.random() < 0.25:
+        medicalDebt.append(round(np.random.uniform(50, 300), 2))
+    elif inc < 60000 and np.random.random() < 0.12:
+        medicalDebt.append(round(np.random.uniform(50, 200), 2))
+    else:
+        medicalDebt.append(0)
+
+# -- food & groceries --
+def calculateGroceries(hh_size, income, workArrangement):
+    basePP = 300
     
-
-
-
+    incomeMultiplier = 0.8 + (income / 100000) * 0.6
+    incomeMultiplier = min(incomeMultiplier, 1.5)
+    
+    if workArrangement == 'Remote':
+        wfhMultiplier = 1.15
+    elif workArrangement == 'Hybrid':
+        wfhMultiplier = 1.05
+    else:
+        wfhMultiplier = 1.0
         
+    total = basePP * hh_size * incomeMultiplier * wfhMultiplier
+    return round(total * np.random.uniform(0.85, 1.15), 2)
 
+groceries = [calculateGroceries(h, inc, w) for h, inc, w in zip(household_size, annualIncome, workArrangement)]
+
+# dining out/takeout (income & age dependent)
+def calculateDiningOut(income, age, workArrangement):
+    if income < 30000:
+        base = np.random.uniform(50, 150)
+    elif income < 50000:
+        base = np.random.uniform(100, 250)
+    elif income < 80000:
+        base = np.random.uniform(200, 400)
+    elif income < 120000:
+        base = np.random.uniform(300, 600)
+    else:
+        base = np.random.uniform(450, 900)
+    
+    if age < 35:
+        base *= 1.3
+    elif age < 50:
+        base *= 1.1
+    
+    if workArrangement == 'Office':
+        base *= 1.3
+    elif workArrangement == 'Hybrid':
+        base *= 1.15
+        
+    return round(base, 2)
+
+diningOut = [calculateDiningOut(inc, a, w) for inc, a, w in zip(annualIncome, ages, workArrangement)]
+
+# coffee shops (age & income dependent)
+coffee = []
+for inc, age in zip(annualIncome, ages):
+    if age < 40 and inc > 40000:
+        if np.random.random() < 0.6:
+            coffee.append(round(np.random.uniform(40, 120), 2))
+        else:
+            coffee.append(round(np.random.uniform(0, 30), 2))
+    elif inc > 60000 and np.random.random() < 0.4:
+        coffee.append(round(np.random.uniform(30, 90), 2))
+    else:
+        coffee.append(round(np.random.uniform(0, 25), 2))
+    
+# alcohol purchases
+alcohol = []
+for inc, age in zip(annualIncome, ages):
+    if age < 30:
+        alcohol.append(round(np.random.uniform(50, 200), 2))
+    elif age < 50:
+        alcohol.append(round(np.random.uniform(30, 150), 2))
+    elif age < 70:
+        alcohol.append(round(np.random.uniform(20, 100), 2))
+    else:
+        alcohol.append(round(np.random.uniform(10, 60), 2))
+    
+# -- subscriptions & entertainment --
+# streaming services 
+streaming = []
+for inc, age in zip(annualIncome, ages):
+    numServices = 0
+    if age < 40:
+        numServices = np.random.choice([2, 3, 4, 5], p=[0.2, 0.35, 0.3, 0.15])
+    elif age < 60:
+        numServices = np.random.choice([1, 2, 3, 4], p=[0.25, 0.35, 0.25, 0.15])
+    else:
+        numServices = np.random.choice([1, 2, 3], p=[0.4, 0.4, 0.2])
+        
+    # avg ~$12 per service
+    streaming.append(round(numServices * np.random.uniform(10, 15), 2))
+    
+musicStreaming = [round(np.random.uniform(10, 17), 2) if np.random.random() < 0.5 else 0 for _ in range(n)]
+
+# gaming subscriptions (age dependent)
+gaming = []
+for age, inc in zip(ages, annualIncome):
+    if age < 35 and np.random.random() < 0.4:
+        gaming.append(round(np.random.uniform(15, 60), 2))
+    elif age < 50 and np.random.random() < 0.2:
+        gaming.append(round(np.random.uniform(15, 40), 2))
+    else:
+        gaming.append(0)
+    
+# gym membership
+gym = []
+for inc, age in zip(annualIncome, ages):
+    if age < 50 and inc > 40000 and np.random.random() < 0.35:
+        gym.append(round(np.random.uniform(30, 100), 2))
+    elif age < 70 and inc > 50000 and np.random.random() < 0.2:
+        gym.append(round(np.random.uniform(30, 80), 2))
+    else:
+        gym.append(0)
+
+# other subscriptions
+otherSubcriptions = [round(np.random.uniform(0, 60), 2) if np.random.random() < 0.3 else 0 for _ in range(n)]
+
+# -- personal & household --
+# clothing
+clothing = []
+for inc, gender in zip(annualIncome, gender):
+    if inc < 40000:
+        base = np.random.uniform(30, 80)
+    elif inc < 80000:
+        base = np.random.uniform(60, 150)
+    else:
+        base = np.random.uniform(100, 300)
+    
+    if gender == 'Female':
+        base *= 1.3
+    
+    clothing.append(round(base, 2))
+
+# personal care
+personalCare = []
+for inc, gender, hh in zip(annualIncome, gender, household_size):
+    base = 40 * hh
+    
+    if gender == 'Female':
+        base *= 1.5
+    if inc > 80000:
+        base *= 1.3
+    
+    personalCare.append(round(base * np.random.uniform(0.8, 1.2), 2))
+
+# household supplies
+householdSupplies = [round(np.random.uniform(40, 120) * (1 + hh_size * 0.2), 2) for hh_size in household_size]
+
+# childcare 
+childcare = []
+for hh_type, inc, reg in zip(household_type, annualIncome, region):
+    if hh_type in ['SingleParent', 'SmallFamily']:
+        if np.random.random() < 0.6:
+            baseCost = {'Northeast': 1500, 'West': 1400, 'Midwest': 900, 'South': 950}
+            cost = baseCost[reg] * np.random.uniform(0.8, 1.3)
+            childcare.append(round(cost, 2))
+        else:
+            childcare.append(0)
+    else:
+        childcare.append(0)
+
+# pet expenses
+petExpenses = []
+for hh_type, inc in zip(household_type, annualIncome):
+    if np.random.random() < 0.35:
+        baseCost = np.random.uniform(50, 150)
+        if inc > 80000:
+            baseCost *= 1.3
+        petExpenses.append(round(baseCost, 2))
+    else:
+        petExpenses.append(0)
+    
