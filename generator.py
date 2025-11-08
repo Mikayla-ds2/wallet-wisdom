@@ -602,4 +602,116 @@ for hh_type, inc in zip(household_type, annualIncome):
         petExpenses.append(round(baseCost, 2))
     else:
         petExpenses.append(0)
+
+# -- discretionary spending --
+# entertainment
+entertainment = []
+for inc, age in zip(annualIncome, ages):
+    if age < 35:
+        base = np.random.uniform(50, 200)
+    elif age < 55:
+        base = np.random.uniform(30, 150)
+    else:
+        base = np.random.uniform(20, 80)
+
+    if inc > 80000:
+        base *= 1.5
     
+    entertainment.append(round(base, 2))
+
+# hobbies
+hobbies = [round(np.random.uniform(0, 150) * (inc / 60000), 2) if np.random.random() < 0.6 else 0 for inc in annualIncome]
+
+# travel/vaca (averaged monthly)
+travel = []
+for inc, age in zip(annualIncome, ages):
+    if inc < 40000:
+        travel.append(round(np.random.uniform(0, 50), 2))
+    elif inc < 80000:
+        travel.append(round(np.random.uniform(50, 200), 2))
+    elif inc < 120000:
+        travel.append(round(np.random.uniform(150, 400), 2))
+    else:
+        travel.append(round(np.random.uniform(300, 800), 2))    
+    
+# gifts 
+gifts = [round(np.random.uniform(30, 150), 2) for _ in range(n)]
+
+# charitable donations (income dependent)
+donations = []
+for inc in annualIncome:
+    if inc > 80000 and np.random.random() < 0.5:
+        donations.append(round(np.random.uniform(50, 300), 2))
+    elif inc > 50000 and np.random.random() < 0.3:
+        donations.append(round(np.random.uniform(20, 100), 2))
+    else:
+        donations.append(0)
+
+# -- savings & investments --
+# 401k contributions (% of salary + employer match considered)
+def calculate401k(income, age, career):
+    if career in ['PartTime', 'Retired', 'FoodService', 'Retail']:
+        return 0
+
+    if np.random.random() < 0.35:
+        if age < 35:
+            rate = np.random.uniform(0.03, 0.08)
+        elif age < 55:
+            rate = np.random.uniform(0.05, 0.12)
+        else:
+            rate = np.random.uniform(0.08, 0.15)
+        
+        monthlyContribution = (income / 12) * rate
+        return round(monthlyContribution, 2)
+    else:
+        return 0
+retirement401k = [calculate401k(inc, age, c) for inc, age, c in zip(annualIncome, ages, career)]
+
+# ira contributions
+iraContribution = []
+for inc, age in zip(annualIncome, ages):
+    if inc > 60000 and age < 65 and np.random.random() < 0.25:
+        # max $6500/year ($541 monthly) or $7500 ($625) if 50+
+        if age >= 50:
+            iraContribution.append(round(np.random.uniform(200, 625), 2))
+        else:
+            iraContribution.append(round(np.random.uniform(150, 541), 2))
+    else:
+        iraContribution.append(0)
+        
+# emergency fund contributions
+emergencyFundContributions = []
+for inc in annualIncome:
+    if np.random.random() < 0.4:
+        contribution = (inc / 12) * np.random.uniform(0.02, 0.1)
+        emergencyFundContributions.append(round(contribution, 2))
+    else:
+        emergencyFundContributions.append(0)
+
+# general savings
+generalSavings = []
+for inc in annualIncome:
+    if np.random.random() < 0.3:
+        savings = (inc / 12) * np.random.uniform(0.02, 0.08)
+        generalSavings.append(round(savings, 2))
+    else:
+        generalSavings.append(0)
+    
+# investments (brokerage, crypto etc)
+investmentContributions = []
+for inc in annualIncome:
+    if inc > 80000 and np.random.random() < 0.35:
+        investmentContributions.append(round(np.random.uniform(200, 800), 2))
+    elif inc > 100000 and np.random.random() < 0.5:
+        investmentContributions.append(round(np.random.uniform(300, 1200), 2))
+    else:
+        investmentContributions.append(0)
+    
+# 529 plans for families
+contributions529 = []
+for hh_type, inc in zip(household_type, annualIncome):
+    if hh_type in ['SingleParent', 'SmallFamily'] and inc > 60000 and np.random.random() < 0.4:
+        contributions529.append(round(np.random.uniform(100, 500), 2))
+    else:
+        contributions529.append(0)
+
