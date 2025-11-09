@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from datetime import datatime
+from datetime import datetime
 import random
 
 # setting seed for reproducibility
@@ -18,8 +18,10 @@ print(f"Creating {n} synthetic individuals with full financial profiles...\n")
 ages = np.random.choice(
     [25, 30, 35, 40, 45, 50, 55, 60, 65, 70],
     size=n,
-    p=[0.15, 0.2, 0.15, 0.12, 0.1, 0.08, 0.05, 0.03, 0.02]
+    p=[0.15, 0.20, 0.15, 0.12, 0.10, 0.10, 0.08, 0.05, 0.03, 0.02]
 )
+
+ages = ages.astype(int)
 
 # race/ethnicity
 raceEthnicity = np.random.choice(
@@ -194,7 +196,7 @@ def calculateIncome(edu, age, career, region):
     
     return round(income, 2)
 
-annualIncome = [calculateIncome(e, c, a, r) for e, c, a, r in zip(education, career, ages, region)]
+annualIncome = [calculateIncome(e, a, c, r) for e, a, c, r in zip(education, ages, career, region)]
 
 # side hustle income (20% of people have side income)
 sideHustle = np.random.choice([True, False], size=n, p=[0.2, 0.8])
@@ -290,7 +292,7 @@ phone = [round(np.random.uniform(40, 150) * hh_size / 2, 2) for hh_size in house
 # -- transportation -- 
 # car ownership (region & income dependent)
 
-def car(region, income, workArrangement):
+def hasCar(region, income, workArrangement):
     if region in ['Northeast'] and income < 50000:
         return np.random.choice([True, False], p=[0.7, 0.3])
     elif workArrangement == 'Remote':
@@ -298,11 +300,19 @@ def car(region, income, workArrangement):
     else:
         return np.random.choice([True, False], p=[0.92, 0.08])
 
-hasCar = [car(r, inc, w) for r, inc, w in zip(region, annualIncome, workArrangement)]
+# Test if list comprehension works at all
+test = [True for r, inc, w in zip(region, annualIncome, workArrangement)]
+print("Test length:", len(test))
+
+# Now try calling the function manually
+print("Manual call:", hasCar(region[0], annualIncome[0], workArrangement[0]))
+
+# Now the actual line
+ownsCar = [hasCar(r, inc, w) for r, inc, w in zip(region, annualIncome, workArrangement)]
 
 # car payment
-def calculateCarPayment(hasCar, income, age):
-    if not hasCar:
+def calculateCarPayment(ownsCar, income, age):
+    if not ownsCar:
         return 0
     
     if np.random.random() > 0.4: # 40% have car payments
@@ -312,12 +322,12 @@ def calculateCarPayment(hasCar, income, age):
     avgPayment = (income / 12) * np.random.uniform(0.1, 0.2)
     return round(avgPayment * np.random.uniform(0.7, 1.4), 2)
 
-carPayment = [calculateCarPayment(has, inc, a) for has, inc, a in zip(hasCar, annualIncome, ages)]
+carPayment = [calculateCarPayment(has, inc, a) for has, inc, a in zip(ownsCar, annualIncome, ages)]
 
 # car insurance
 carInsurance = []
-for hasCar, age in zip(hasCar, ages):
-    if hasCar:
+for possessesCar, age in zip(ownsCar, ages):
+    if possessesCar:
         if age < 25:
             carInsurance.append(round(np.random.uniform(200, 400), 2))
         elif age < 65:
@@ -328,8 +338,8 @@ for hasCar, age in zip(hasCar, ages):
         carInsurance.append(0)
     
 # gas (work arrangement & car ownership dependent)
-def calculateGas(hasCar, workArrangement):
-    if not hasCar:
+def calculateGas(ownsCar, workArrangement):
+    if not ownsCar:
         return 0
     
     if workArrangement == 'Remote':
@@ -340,12 +350,12 @@ def calculateGas(hasCar, workArrangement):
         return round(np.random.uniform(150, 300), 2)
     else:
         return round(np.random.uniform(60, 120), 2)
-gas = [calculateGas(has, w) for has, w in zip(hasCar, workArrangement)]
+gas = [calculateGas(has, w) for has, w in zip(ownsCar, workArrangement)]
 
 # public transit (non-car owners & urban dwellers)
 publicTransit = []
-for hasCar, reg in zip(hasCar, region):
-    if not hasCar:
+for possessesCar, reg in zip(ownsCar, region):
+    if not possessesCar:
         publicTransit.append(round(np.random.uniform(80, 150), 2))
     elif reg == 'Northeast' and np.random.random() < 0.30:
         publicTransit.append(round(np.random.uniform(100, 200), 2))
@@ -353,7 +363,7 @@ for hasCar, reg in zip(hasCar, region):
         publicTransit.append(0)
     
 # car maintenance (averaged monthly)
-carMaintenance = [round(np.random.uniform(50, 150), 2) if has else 0 for has in hasCar]
+carMaintenance = [round(np.random.uniform(50, 150), 2) if has else 0 for has in ownsCar]
 
 # -- healthcare & insurance --
 # health insurance premiums
@@ -551,7 +561,7 @@ otherSubscriptions = [round(np.random.uniform(0, 60), 2) if np.random.random() <
 # -- personal & household --
 # clothing
 clothing = []
-for inc, gender in zip(annualIncome, gender):
+for inc, gend in zip(annualIncome, gender):
     if inc < 40000:
         base = np.random.uniform(30, 80)
     elif inc < 80000:
@@ -559,17 +569,17 @@ for inc, gender in zip(annualIncome, gender):
     else:
         base = np.random.uniform(100, 300)
     
-    if gender == 'Female':
+    if gend == 'Female':
         base *= 1.3
     
     clothing.append(round(base, 2))
 
 # personal care
 personalCare = []
-for inc, gender, hh in zip(annualIncome, gender, household_size):
+for inc, gend, hh in zip(annualIncome, gender, household_size):
     base = 40 * hh
     
-    if gender == 'Female':
+    if gend == 'Female':
         base *= 1.5
     if inc > 80000:
         base *= 1.3
@@ -714,6 +724,18 @@ for hh_type, inc in zip(household_type, annualIncome):
         contributions529.append(round(np.random.uniform(100, 500), 2))
     else:
         contributions529.append(0)
+        
+# Debug: Check all list lengths
+print("Checking list lengths...")
+vars_to_check = {
+    'gaming': gaming, 'gym': gym, 'otherSubscriptions': otherSubscriptions,
+    'clothing': clothing, 'personalCare': personalCare, 'householdSupplies': householdSupplies,
+    'childcare': childcare, 'petExpenses': petExpenses
+}
+
+for name, var in vars_to_check.items():
+    if len(var) != n:
+        print(f"ERROR: {name} has length {len(var)}, expected {n}")
 
 # -- calculate totals & financial health metrics --
 # total monthly expenses
@@ -861,7 +883,7 @@ data = pd.DataFrame({
     'utilities': utilities,
     'internet': internet,
     'phone': phone,
-    'ownsCar': hasCar,
+    'ownsCar': ownsCar,
     'carPayment': carPayment,
     'carInsurance': carInsurance,
     'gas': gas,
@@ -919,13 +941,13 @@ data.to_csv('personalFinanceDataset.csv', index=False)
 print(f"Dataset created successfully!")
 print(f"Total records: {len(data)}")
 print(f"\nFinancial Health Distribution:")
-print(data['financial_health'].value_counts())
-print(f"\nDataset saved as 'personal_finance_dataset.csv'")
+print(data['financialHealth'].value_counts())
+print(f"\nDataset saved as 'personalFinanceDataset.csv'")
 print(f"\nSample statistics:")
-print(f"Average monthly income: ${data['monthly_income'].mean():.2f}")
-print(f"Average total expenses: ${data['total_expenses'].mean():.2f}")
-print(f"Average monthly cash flow: ${data['monthly_cash_flow'].mean():.2f}")
-print(f"Average housing ratio: {data['housing_ratio'].mean():.1f}%")
-print(f"Average debt-to-income: {data['debt_to_income'].mean():.1f}%")
+print(f"Average monthly income: ${data['monthlyIncome'].mean():.2f}")
+print(f"Average total expenses: ${data['totalExpenses'].mean():.2f}")
+print(f"Average monthly cash flow: ${data['monthlyCashFlow'].mean():.2f}")
+print(f"Average housing ratio: {data['housingRatio'].mean():.1f}%")
+print(f"Average debt-to-income: {data['debtToIncome'].mean():.1f}%")
 print(f"\nFirst few rows:")
 print(data.head())
