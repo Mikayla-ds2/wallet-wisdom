@@ -1,6 +1,28 @@
 -- head of table --
 drop table if exists demographics
 
+drop table if exists employment
+
+drop table if exists housing
+
+drop table if exists transportation
+
+drop table if exists healthcare
+
+drop table if exists debt
+
+drop table if exists food
+
+drop table if exists subscriptions
+
+drop table if exists personalHousehold
+
+drop table if exists discretionary
+
+drop table if exists savingsInvestments
+
+drop table if exists financialMetrics
+
 create table if not exists demographics (
     personID int PRIMARY key,
     age int,
@@ -25,7 +47,7 @@ create table if not exists employment (
 create table if not exists housing (
     personID int PRIMARY key,
     housingStatus text,
-    housingCost int,
+    housingCost DECIMAL(10, 2),
     propertyTax DECIMAL(10, 2),
     hoaFees decimal(10, 2),
     homeInsurance DECIMAL(10, 2),
@@ -124,6 +146,90 @@ create table if not exists financialMetrics (
     savingsInvestmentsRate DECIMAL(10, 2),
     carPaymentRatio DECIMAL(10, 2),
     monthsSaved DECIMAL(10, 2),
-    financialHealth DECIMAL(10, 2),
+    financialHealth text,
     Foreign Key (personID) REFERENCES demographics(personID)
 )
+
+/copy demographics(personID, age, gender, raceEthnicity, education, region, householdType, householdSize)
+from '/tmp/demographics.csv'
+DELIMITER ','
+csv HEADER;
+
+/copy employment(personID, career, workArrangement, annualIncome, sideHustleIncome, monthlyIncome)
+from '/tmp/employment.csv'
+DELIMITER ','
+CSV HEADER;
+
+/copy housing(personID, housingStatus, housingCost, propertyTax, hoaFees, homeInsurance, utilities, internet, phone)
+from '/tmp/housing.csv'
+DELIMITER ','
+csv header;
+
+/copy transportation(personID, ownsCar, carPayment, carInsurance, gas, publicTransit, carMaintenance)
+from '/tmp/transportation.csv'
+DELIMITER ','
+csv HEADER;
+
+/copy healthcare(personID, healthInsurance, oopMedical, dentalVision, lifeInsurance)
+from '/tmp/healthcare.csv'
+DELIMITER ','
+csv HEADER;
+
+/copy debt(personID, studentLoans, ccPayment, personalLoans, medicalDebt)
+from '/tmp/debt.csv'
+DELIMITER ','
+csv HEADER;
+
+/copy food(personID, groceries, diningOut, coffee, alcohol)
+from '/tmp/food.csv'
+DELIMITER ','
+csv HEADER;
+
+/copy subscriptions(personID, streaming, musicStreaming, gaming, gym, otherSubscriptions)
+from '/tmp/subscriptions.csv'
+DELIMITER ','
+csv header;
+
+/copy personalHousehold(personID, clothing, personalCare, householdSupplies, childcare, petExpenses)
+from '/tmp/personalHousehold.csv'
+DELIMITER ','
+csv header;
+
+/copy discretionary(personID, entertainment, hobbies, travel, gifts, donations)
+from '/tmp/discretionary.csv'
+DELIMITER ','
+csv HEADER;
+
+/copy savingsInvestments(personID, retirement401k, iraContribution, emergencyFundContributions, generalSavings, investmentContributions, contributions529)
+from '/tmp/savingsInvestments.csv'
+DELIMITER ','
+csv header;
+
+/copy financialMetrics(personID, totalExpenses, totalSavingsInvestments, monthlyCashFlow, housingRatio, debtToIncome, savingsInvestmentsRate, carPaymentRatio, monthsSaved, financialHealth)
+from '/tmp/financialMetrics.csv'
+DELIMITER ','
+CSV HEADER;
+
+select * from demographics
+limit 10;
+
+select raceEthnicity, region from demographics
+group by region, raceEthnicity
+order by region asc;
+
+select personID, raceEthnicity, age from demographics
+order by age desc;
+
+select * from debt
+
+select * from demographics
+join debt on demographics.personID = debt.personID
+
+select demographics.personID, age, gender, region, householdType, householdSize, studentLoans from demographics
+join debt on demographics.personID = debt.personID
+where studentLoans > 0
+order by studentLoans desc
+limit 20;
+-- note: explore person 2425
+
+
