@@ -22,7 +22,7 @@ ages = np.random.choice(
 )
 
 # race/ethnicity
-race_ethnicity = np.random.choice(
+raceEthnicity = np.random.choice(
     ['White', 'Hispanic/Latino', 'Black/African American', 'Asian', 'Other/Multiracial'],
     size=n,
     p=[0.6, 0.19, 0.13, 0.06, 0.02]
@@ -546,7 +546,7 @@ for inc, age in zip(annualIncome, ages):
         gym.append(0)
 
 # other subscriptions
-otherSubcriptions = [round(np.random.uniform(0, 60), 2) if np.random.random() < 0.3 else 0 for _ in range(n)]
+otherSubscriptions = [round(np.random.uniform(0, 60), 2) if np.random.random() < 0.3 else 0 for _ in range(n)]
 
 # -- personal & household --
 # clothing
@@ -715,3 +715,217 @@ for hh_type, inc in zip(household_type, annualIncome):
     else:
         contributions529.append(0)
 
+# -- calculate totals & financial health metrics --
+# total monthly expenses
+totalExpenses = []
+for i in range(n):
+    total = (housingCost[i] + propertyTax[i] + hoaFees[i] + homeInsurance[i] + 
+             utilities[i] + internet[i] + phone[i] + carPayment[i] + carInsurance[i] +
+             gas[i] + publicTransit[i] + carMaintenance[i] + healthInsurance[i] + 
+             oopMedical[i] + dentalVision[i] + lifeInsurance[i] + studentLoans[i] +
+             ccPayment[i] + personalLoans[i] + medicalDebt[i] + groceries[i] +
+             diningOut[i] + coffee[i] + alcohol[i] + streaming[i] + musicStreaming[i] +
+             gaming[i] + gym[i] + otherSubscriptions[i] + clothing[i] + personalCare[i] +
+             householdSupplies[i] + childcare[i] + petExpenses[i] + entertainment[i] +
+             hobbies[i] + travel[i] + gifts[i] + donations[i])
+    totalExpenses.append(round(total, 2))
+
+# total savings & investments
+totalSavingsInvestments = []
+for i in range(n):
+    total = (retirement401k[i] + iraContribution[i] + emergencyFundContributions[i] + 
+             generalSavings[i] + investmentContributions[i] + contributions529[i])
+    totalSavingsInvestments.append(round(total, 2))
+
+# montly cash flow
+monthlyCashFlow = [round(inc - exp - sav, 2) for inc, exp, sav in zip(monthlyIncome, totalExpenses, totalSavingsInvestments)]
+
+# housing cost ratio
+housingRatio = [round(housing / inc * 100, 2) if inc > 0 else 0
+                for housing, inc in zip(housingCost, monthlyIncome)]
+
+# debt-to-income ratio (monthly debt payments / monthly income)
+monthlyDebt = [car + student + cc + personal + medical for car, student, cc, personal, medical in 
+               zip(carPayment, studentLoans, ccPayment, personalLoans, medicalDebt)]
+debtToIncome = [round((debt / inc) * 100, 2) if inc > 0 else 0
+                for debt, inc in zip(monthlyDebt, monthlyIncome)]
+
+# savings & investments rate
+savingsInvestmentsRate = [round((sav / inc) * 100, 2) if inc > 0 else 0
+ for sav, inc in zip(totalSavingsInvestments, monthlyIncome)]
+
+# car payment affordability check 
+carPaymentRatio = [round((car / inc) * 100, 2) if inc > 0 else 0
+                   for car, inc in zip(carPayment, monthlyIncome)]
+
+# estimating how many months saved in emergency fund
+monthsSaved = []
+for i in range(n):
+    if emergencyFundContributions[i] > 0 and ages[i] > 30:
+        months = np.random.uniform(1, 6)
+    elif emergencyFundContributions[i] > 0:
+        months = np.random.uniform(0.5, 3)
+    elif annualIncome[i] > 80000 and ages[i] > 40:
+        months = np.random.uniform(1, 4)
+    else:
+        months = np.random.uniform(0, 2)
+    monthsSaved.append(round(months, 2))
+
+# -- financial health classification --
+def classifyFinancialHealth(cashFlow, housingRatio, debtToIncome, savingsInvestmentsRate,
+                            monthsSaved, carRatio, income):
+    score = 0
+    
+    # cash flow (most important)
+    if cashFlow > income * 0.15:
+        score += 3
+    elif cashFlow > income * 0.05:
+        score += 2
+    elif cashFlow > 0:
+        score += 1
+    else:
+        score -= 2
+        
+    # housing ratio
+    if housingRatio <= 30:
+        score += 2
+    elif housingRatio <= 40:
+        score += 1
+    elif housingRatio > 50:
+        score -= 2
+    
+    # debt to income ratio
+    if debtToIncome < 15:
+        score += 3
+    elif debtToIncome < 30:
+        score += 2
+    elif debtToIncome < 45:
+        score += 1
+    elif debtToIncome > 50:
+        score =- 2
+    
+    # savings & investments rate
+    if savingsInvestmentsRate >= 15:
+        score += 2
+    elif savingsInvestmentsRate >= 10:
+        score += 1
+    elif savingsInvestmentsRate < 5:
+        score -= 1
+    
+    # emergency fund
+    if monthsSaved >= 6:
+        score += 2
+    elif monthsSaved >= 3:
+        score += 1
+    elif monthsSaved < 1:
+        score -= 2
+
+    # car payment ratio
+    if carRatio > 0 and carRatio > 15:
+        score -= 1
+    
+    # classification
+    if score >= 8:
+        return 'FinanciallyThriving'
+    elif score >= 4:
+        return 'FinanciallyStable'
+    elif score >= 0:
+        return 'FinanciallyVulnerable'
+    else:
+        return 'FinanciallyDistressed'
+    
+financialHealth = [classifyFinancialHealth(cf, hr, dti, sir, ms, cr, inc)
+                   for cf, hr, dti, sir, ms, cr, inc in
+                   zip(monthlyCashFlow, housingRatio, debtToIncome, savingsInvestmentsRate, monthsSaved, 
+                       carPaymentRatio, monthlyIncome)]
+
+# -- creating dataframe & csv --
+data = pd.DataFrame({
+    'age': ages,
+    'gender': gender,
+    'raceEthnicity': raceEthnicity,
+    'education': education,
+    'region': region,
+    'householdType': household_type,
+    'householdSize': household_size,
+    'career': career,
+    'workArrangement': workArrangement,
+    'annualIncome': annualIncome,
+    'sideHustleIncome': sideHustleIncome,
+    'monthlyIncome': monthlyIncome,
+    'housingStatus': housingStatus,
+    'housingCost': housingCost,
+    'propertyTax': propertyTax,
+    'hoaFees': hoaFees,
+    'homeInsurance': homeInsurance,
+    'utilities': utilities,
+    'internet': internet,
+    'phone': phone,
+    'ownsCar': hasCar,
+    'carPayment': carPayment,
+    'carInsurance': carInsurance,
+    'gas': gas,
+    'publicTransit': publicTransit,
+    'carMaintenance': carMaintenance,
+    'healthInsurance': healthInsurance,
+    'oopMedical': oopMedical,
+    'dentalVision': dentalVision,
+    'lifeInsurance': lifeInsurance,
+    'studentLoans': studentLoans,
+    'creditcardPayment': ccPayment,
+    'personalLoans': personalLoans,
+    'medicalDebt': medicalDebt,
+    'groceries': groceries,
+    'diningOut': diningOut,
+    'coffee': coffee,
+    'alcohol': alcohol,
+    'streaming': streaming,
+    'musicStreaming': musicStreaming,
+    'gaming': gaming,
+    'gym': gym,
+    'otherSubscriptions': otherSubscriptions,
+    'clothing': clothing,
+    'personalCare': personalCare,
+    'householdSupplies': householdSupplies,
+    'childcare': childcare,
+    'petExpenses': petExpenses,
+    'entertainment': entertainment,
+    'hobbies': hobbies,
+    'travel': travel,
+    'gifts': gifts,
+    'donations': donations,
+    'retirement401k': retirement401k,
+    'iraContribution': iraContribution,
+    'emergencyFundContributions': emergencyFundContributions,
+    'generalSavings': generalSavings,
+    'investmentContributions': investmentContributions,
+    'contributions529': contributions529,
+    'totalExpenses': totalExpenses,
+    'totalSavingsInvestments': totalSavingsInvestments,
+    'monthlyCashFlow': monthlyCashFlow,
+    'housingRatio': housingRatio,
+    'debtToIncome': debtToIncome,
+    'savingsInvestmentsRate': savingsInvestmentsRate,
+    'carPaymentRatio': carPaymentRatio,
+    'monthsSaved': monthsSaved,
+    
+    # target variable
+    'financialHealth': financialHealth
+})
+
+# save as csv
+data.to_csv('personalFinanceDataset.csv', index=False)
+
+print(f"Dataset created successfully!")
+print(f"Total records: {len(data)}")
+print(f"\nFinancial Health Distribution:")
+print(data['financial_health'].value_counts())
+print(f"\nDataset saved as 'personal_finance_dataset.csv'")
+print(f"\nSample statistics:")
+print(f"Average monthly income: ${data['monthly_income'].mean():.2f}")
+print(f"Average total expenses: ${data['total_expenses'].mean():.2f}")
+print(f"Average monthly cash flow: ${data['monthly_cash_flow'].mean():.2f}")
+print(f"Average housing ratio: {data['housing_ratio'].mean():.1f}%")
+print(f"Average debt-to-income: {data['debt_to_income'].mean():.1f}%")
+print(f"\nFirst few rows:")
+print(data.head())
