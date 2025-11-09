@@ -299,15 +299,7 @@ def hasCar(region, income, workArrangement):
         return np.random.choice([True, False], p=[0.85, 0.15])
     else:
         return np.random.choice([True, False], p=[0.92, 0.08])
-
-# Test if list comprehension works at all
-test = [True for r, inc, w in zip(region, annualIncome, workArrangement)]
-print("Test length:", len(test))
-
-# Now try calling the function manually
-print("Manual call:", hasCar(region[0], annualIncome[0], workArrangement[0]))
-
-# Now the actual line
+    
 ownsCar = [hasCar(r, inc, w) for r, inc, w in zip(region, annualIncome, workArrangement)]
 
 # car payment
@@ -724,18 +716,6 @@ for hh_type, inc in zip(household_type, annualIncome):
         contributions529.append(round(np.random.uniform(100, 500), 2))
     else:
         contributions529.append(0)
-        
-# Debug: Check all list lengths
-print("Checking list lengths...")
-vars_to_check = {
-    'gaming': gaming, 'gym': gym, 'otherSubscriptions': otherSubscriptions,
-    'clothing': clothing, 'personalCare': personalCare, 'householdSupplies': householdSupplies,
-    'childcare': childcare, 'petExpenses': petExpenses
-}
-
-for name, var in vars_to_check.items():
-    if len(var) != n:
-        print(f"ERROR: {name} has length {len(var)}, expected {n}")
 
 # -- calculate totals & financial health metrics --
 # total monthly expenses
