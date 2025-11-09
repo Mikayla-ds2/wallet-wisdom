@@ -952,7 +952,7 @@ tables = {
     'personalHousehold': ['personID', 'clothing', 'personalCare', 'householdSupplies', 'childcare', 'petExpenses'],
     'discretionary': ['personID', 'entertainment', 'hobbies', 'travel', 'gifts', 'donations'],
     'savingsInvestments': ['personID', 'retirement401k', 'iraContribution', 'emergencyFundContributions', 'generalSavings', 'investmentContributions', 'contributions529'],
-    'financialMetrics': ['totalExpenses', 'totalSavingsInvestments', 'monthlyCashFlow', 'housingRatio', 'debtToIncome', 'savingsInvestmentsRate', 'carPaymentRatio', 'savingsInvestmentsRate', 'monthsSaved', 'financialHealth']
+    'financialMetrics': ['personID','totalExpenses', 'totalSavingsInvestments', 'monthlyCashFlow', 'housingRatio', 'debtToIncome', 'savingsInvestmentsRate', 'carPaymentRatio', 'monthsSaved', 'financialHealth']
 }
 
 # create each csv
