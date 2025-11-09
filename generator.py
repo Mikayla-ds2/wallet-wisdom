@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import random
+import os
 
 # setting seed for reproducibility
 np.random.seed(42)
@@ -84,19 +85,19 @@ def assignHousehold(age):
             ['Single', 'DINKS', 'Other'],
             p=[0.4, 0.5, 0.1]
         )
-household_type = [assignHousehold(age) for age in ages]
-household_size = []
-for hh in household_type:
+householdType = [assignHousehold(age) for age in ages]
+householdSize = []
+for hh in householdType:
     if hh == 'Single':
-        household_size.append(1)
+        householdSize.append(1)
     elif hh == 'DINKS':
-        household_size.append(2)
+        householdSize.append(2)
     elif hh == 'SmallFamily':
-        household_size.append(np.random.choice([3, 4, 5], p=[0.4, 0.4, 0.2]))
+        householdSize.append(np.random.choice([3, 4, 5], p=[0.4, 0.4, 0.2]))
     elif hh == 'SingleParent':
-        household_size.append(np.random.choice([2, 3, 4], p=[0.5, 0.3, 0.2]))
+        householdSize.append(np.random.choice([2, 3, 4], p=[0.5, 0.3, 0.2]))
     else: # roommates & other
-        household_size.append(np.random.choice([2, 3, 4], p=[0.5, 0.3, 0.2]))
+        householdSize.append(np.random.choice([2, 3, 4], p=[0.5, 0.3, 0.2]))
 
 # -- career & income --
 # career fields (education-dependent)
@@ -245,7 +246,7 @@ def calculateHousingCost(status, region, hh_size, income):
     return round(cost, 2)
 
 housingCost = [calculateHousingCost(s, r, h, inc) 
-                for s, r, h, inc in zip(housingStatus, region, household_size, annualIncome)]
+                for s, r, h, inc in zip(housingStatus, region, householdSize, annualIncome)]
 
 # property tax (for owner's only)
 propertyTax = [round(housing / 12, 2) if status == 'Own' else 0
@@ -281,13 +282,13 @@ def calculateUtilities(hh_size, workArrangement, region):
     
     return round(base * np.random.uniform(0.85, 1.15), 2)
 
-utilities = [calculateUtilities(h, w, r) for h, w, r in zip(household_size, workArrangement, region)]
+utilities = [calculateUtilities(h, w, r) for h, w, r in zip(householdSize, workArrangement, region)]
 
 # internet
 internet = [round(np.random.uniform(50, 120), 2) for _ in range(n)]
 
 # phone
-phone = [round(np.random.uniform(40, 150) * hh_size / 2, 2) for hh_size in household_size]
+phone = [round(np.random.uniform(40, 150) * hh_size / 2, 2) for hh_size in householdSize]
 
 # -- transportation -- 
 # car ownership (region & income dependent)
@@ -370,7 +371,7 @@ def calculateHealthInsurance(career, income, hh_size):
     else:
         return round(np.random.uniform(150, 450) * hh_size / 2, 2)
     
-healthInsurance = [calculateHealthInsurance(car, inc, hh) for car, inc, hh in zip(career, annualIncome, household_size)]
+healthInsurance = [calculateHealthInsurance(car, inc, hh) for car, inc, hh in zip(career, annualIncome, householdSize)]
 
 # out of pocket medical costs
 oopMedical = [round(np.random.uniform(50, 300), 2) for _ in range(n)]
@@ -380,7 +381,7 @@ dentalVision = [round(np.random.uniform(20, 80), 2) if np.random.random() < 0.65
 
 # life insurance 
 lifeInsurance = []
-for hh_type, inc in zip(household_type, annualIncome):
+for hh_type, inc in zip(householdType, annualIncome):
     if hh_type in ['SmallFamily', 'SingleParent'] and inc > 50000:
         if np.random.random() < 0.7:
             lifeInsurance.append(round(np.random.uniform(50, 200), 2))
@@ -456,7 +457,7 @@ def calculateGroceries(hh_size, income, workArrangement):
     total = basePP * hh_size * incomeMultiplier * wfhMultiplier
     return round(total * np.random.uniform(0.85, 1.15), 2)
 
-groceries = [calculateGroceries(h, inc, w) for h, inc, w in zip(household_size, annualIncome, workArrangement)]
+groceries = [calculateGroceries(h, inc, w) for h, inc, w in zip(householdSize, annualIncome, workArrangement)]
 
 # dining out/takeout (income & age dependent)
 def calculateDiningOut(income, age, workArrangement):
@@ -568,7 +569,7 @@ for inc, gend in zip(annualIncome, gender):
 
 # personal care
 personalCare = []
-for inc, gend, hh in zip(annualIncome, gender, household_size):
+for inc, gend, hh in zip(annualIncome, gender, householdSize):
     base = 40 * hh
     
     if gend == 'Female':
@@ -579,11 +580,11 @@ for inc, gend, hh in zip(annualIncome, gender, household_size):
     personalCare.append(round(base * np.random.uniform(0.8, 1.2), 2))
 
 # household supplies
-householdSupplies = [round(np.random.uniform(40, 120) * (1 + hh_size * 0.2), 2) for hh_size in household_size]
+householdSupplies = [round(np.random.uniform(40, 120) * (1 + hh_size * 0.2), 2) for hh_size in householdSize]
 
 # childcare 
 childcare = []
-for hh_type, inc, reg in zip(household_type, annualIncome, region):
+for hh_type, inc, reg in zip(householdType, annualIncome, region):
     if hh_type in ['SingleParent', 'SmallFamily']:
         if np.random.random() < 0.6:
             baseCost = {'Northeast': 1500, 'West': 1400, 'Midwest': 900, 'South': 950}
@@ -596,7 +597,7 @@ for hh_type, inc, reg in zip(household_type, annualIncome, region):
 
 # pet expenses
 petExpenses = []
-for hh_type, inc in zip(household_type, annualIncome):
+for hh_type, inc in zip(householdType, annualIncome):
     if np.random.random() < 0.35:
         baseCost = np.random.uniform(50, 150)
         if inc > 80000:
@@ -711,7 +712,7 @@ for inc in annualIncome:
     
 # 529 plans for families
 contributions529 = []
-for hh_type, inc in zip(household_type, annualIncome):
+for hh_type, inc in zip(householdType, annualIncome):
     if hh_type in ['SingleParent', 'SmallFamily'] and inc > 60000 and np.random.random() < 0.4:
         contributions529.append(round(np.random.uniform(100, 500), 2))
     else:
@@ -848,8 +849,8 @@ data = pd.DataFrame({
     'raceEthnicity': raceEthnicity,
     'education': education,
     'region': region,
-    'householdType': household_type,
-    'householdSize': household_size,
+    'householdType': householdType,
+    'householdSize': householdSize,
     'career': career,
     'workArrangement': workArrangement,
     'annualIncome': annualIncome,
@@ -874,7 +875,7 @@ data = pd.DataFrame({
     'dentalVision': dentalVision,
     'lifeInsurance': lifeInsurance,
     'studentLoans': studentLoans,
-    'creditcardPayment': ccPayment,
+    'ccPayment': ccPayment,
     'personalLoans': personalLoans,
     'medicalDebt': medicalDebt,
     'groceries': groceries,
@@ -931,3 +932,35 @@ print(f"Average housing ratio: {data['housingRatio'].mean():.1f}%")
 print(f"Average debt-to-income: {data['debtToIncome'].mean():.1f}%")
 print(f"\nFirst few rows:")
 print(data.head())
+
+# had the lovely idea to break this huge dataset into multiple smaller datasets & tables for sql use
+data.insert(0, 'personID', range(1, len(data) + 1)) # to have a specific id as a foreign? id
+
+# creating directory for all files to go
+os.makedirs('sqlTables', exist_ok=True)
+
+# defining table structures
+tables = {
+    'demographics': ['personID', 'age', 'gender', 'raceEthnicity', 'education', 'region', 'householdType', 'householdSize'],
+    'employment': ['personID', 'career', 'workArrangement', 'annualIncome', 'sideHustleIncome', 'monthlyIncome'],
+    'housing': ['personID', 'housingStatus', 'housingCost', 'propertyTax', 'hoaFees', 'homeInsurance', 'utilities', 'internet', 'phone'],
+    'transportation': ['personID', 'ownsCar', 'carPayment', 'carInsurance', 'gas', 'publicTransit', 'carMaintenance'],
+    'healthcare': ['personID', 'healthInsurance', 'oopMedical', 'dentalVision', 'lifeInsurance'],
+    'debt': ['personID', 'studentLoans', 'ccPayment', 'personalLoans', 'medicalDebt'],
+    'food': ['personID', 'groceries', 'diningOut', 'coffee', 'alcohol'],
+    'subscriptions': ['personID', 'streaming', 'musicStreaming', 'gaming', 'gym', 'otherSubscriptions'],
+    'personalHousehold': ['personID', 'clothing', 'personalCare', 'householdSupplies', 'childcare', 'petExpenses'],
+    'discretionary': ['personID', 'entertainment', 'hobbies', 'travel', 'gifts', 'donations'],
+    'savingsInvestments': ['personID', 'retirement401k', 'iraContribution', 'emergencyFundContributions', 'generalSavings', 'investmentContributions', 'contributions529'],
+    'financialMetrics': ['totalExpenses', 'totalSavingsInvestments', 'monthlyCashFlow', 'housingRatio', 'debtToIncome', 'savingsInvestmentsRate', 'carPaymentRatio', 'savingsInvestmentsRate', 'monthsSaved', 'financialHealth']
+}
+
+# create each csv
+for table_name, columns in tables.items():
+    table_data = data[columns]
+    output_path = f"sqlTables/{table_name}.csv"
+    table_data.to_csv(output_path, index=False)
+    print(f"Created {output_path} with {len(columns)} columns")
+    
+print(f"\nAll tables created in 'sql_tables/' directory!")
+print(f"Ready to copy to /tmp for PostgreSQL import")
