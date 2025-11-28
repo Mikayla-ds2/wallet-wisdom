@@ -1,6 +1,4 @@
 -- head of table --
-drop table if exists demographics
-
 drop table if exists employment
 
 drop table if exists housing
@@ -223,10 +221,10 @@ CREATE TABLE finance (
     carPaymentRatio DECIMAL(10, 2),
     monthsSaved DECIMAL(10, 2),
     financialHealth TEXT,
-    age_category TEXT
+    ageCategory TEXT
 );
 
-/copy finance(age, gender, raceEthnicity, education, region, householdType, 
+/copy finance(personID, age, gender, raceEthnicity, education, region, householdType, 
 householdSize, career, workArrangement, annualIncome, sideHustleIncome, monthlyIncome, 
 housingStatus, housingCost, propertyTax, hoaFees, homeInsurance, utilities, internet, phone, 
 ownsCar, carPayment, carInsurance, gas, publicTransit, carMaintenance, healthInsurance, oopMedical, 
@@ -235,7 +233,7 @@ coffee, alcohol, streaming, musicStreaming, gaming, gym, otherSubscriptions, clo
 householdSupplies, childcare, petExpenses, entertainment, hobbies, travel, gifts, donations, retirement401k, 
 iraContribution, emergencyFundContributions, generalSavings, investmentContributions, contributions529, 
 totalExpenses, totalSavingsInvestments, monthlyCashFlow, housingRatio, debtToIncome, 
-savingsInvestmentsRate, carPaymentRatio, monthsSaved, financialHealth, age_category)
+savingsInvestmentsRate, carPaymentRatio, monthsSaved, financialHealth, ageCategory)
 from '/tmp/personalFinanceDataset.csv'
 DELIMITER ','
 csv header;
@@ -300,6 +298,8 @@ from '/tmp/financialMetrics.csv'
 DELIMITER ','
 CSV HEADER;
 
+-- BEGINNING OF QUERIES --
+
 select * from demographics
 limit 10;
 
@@ -329,10 +329,10 @@ select * from finance
 where monthlycashflow > 0
 order by monthlycashflow desc;
 
-select education, sum(monthlycashflow) as sum from finance
+select education, avg(monthlycashflow) as average from finance
 where monthlycashflow > 0
 group by education
-order by sum desc;
+order by average desc;
 
 select education, sum(travel) as travelExpenses from finance
 where householdSize < 3
@@ -391,7 +391,7 @@ select * from demographics
 select personID, age, gender, raceEthnicity, education, region, householdType, householdSize, career, workArrangement, housingStatus, ownsCar, financialHealth from finance
 order by age desc;
 
-select personID, age, gender, raceEthnicity, education, region, householdType, householdSize, career, workArrangement, ownsCar, housingStatus, financialHealth from finance
+select personID, age, ageCategory, gender, raceEthnicity, education, region, householdType, householdSize, career, workArrangement, ownsCar, housingStatus, financialHealth from finance
 
 select householdType, avg(age) as averageAge from finance
 group by householdType
@@ -400,3 +400,109 @@ order by averageAge desc;
 select age from finance
 order by age desc;
 -- 25 to 70 years old --
+
+select ageCategory, career, count(personID) as count from finance
+group by ageCategory, career
+order by count desc;
+
+select education, avg(age) as average from finance
+group by education
+order by average desc; 
+
+select education, region, count(personID) as count from finance
+group by education, region
+order by count desc;
+
+select education, avg(monthlyIncome) as averageIncome from finance
+group by education
+order by averageIncome desc;
+
+select career, raceEthnicity, avg(monthlyIncome) as averageIncome from finance
+group by career, raceEthnicity
+order by averageIncome desc;
+
+select gender, region, avg(monthlyIncome) as averageIncome from finance
+group by gender, region
+order by averageIncome desc;
+
+select education, career, count(age) as count from finance
+where annualIncome > 50000
+group by education, career
+order by count desc;
+
+select * from finance
+where education = 'Ph.D' and career = 'PartTime'
+
+select gender, region, avg(studentLoans + personalLoans) as averageLoans from finance
+group by gender, region
+order by averageLoans desc;
+
+select * from debt
+
+select * from finance
+where ccPayment > 100
+
+select * from demographics
+join housing on demographics.personID = housing.personID
+
+select education, raceEthnicity, region, avg(housingCost) as total from demographics
+join housing on demographics.personID = housing.personID
+join employment on demographics.personID = employment.personID
+where age > 35
+and region != 'West'
+group by education, raceEthnicity, region
+order by total desc;
+
+select * from demographics
+join employment on demographics.personID = employment.personID
+
+select region, career, sum(sideHustleIncome) as total from demographics
+join employment on demographics.personID = employment.personID
+group by region, career
+order by total desc
+
+select * from finance
+where personID = 2425
+
+select ageCategory, sum(sideHustleIncome) as total from finance
+group by ageCategory
+order by total DESC
+
+select career, ageCategory, avg(sideHustleIncome) as total from finance
+group by career, ageCategory
+order by total desc;
+
+select * from demographics
+join employment on demographics.personID = employment.personID
+where career = 'Education'
+order by monthlyIncome desc;
+
+select * from employment
+where career = 'Education' and workArrangement != 'Office'
+
+select workArrangement, gender, avg(monthlyIncome) as average from employment
+join demographics on employment.personID = demographics.personID
+group by workArrangement, gender
+order by average desc;
+
+select householdType avg(monthlyIncome) as average from demographics
+join employment on demographics.personID = employment.personID
+where region != 'West'
+group by householdType
+
+select * from finance
+where householdType = 'Roommates'
+order by finance
+
+
+select career, avg(monthlyIncome) as average from demographics
+join employment on demographics.personID = employment.personID
+where householdType = 'Roommates'
+group by career
+order by average desc;
+
+select region, count(personID) as count from demographics
+where householdType = 'Roommates'
+group by region
+order by count desc;
+
