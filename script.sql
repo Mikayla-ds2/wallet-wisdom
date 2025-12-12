@@ -536,3 +536,7 @@ select career, avg(monthlyIncome) as avgIncome from finance
 where career = 'Healthcare' or career = 'Retail'
 group by career
 order by avgIncome desc;
+
+select financialHealth, count(financialHealth) as count from finance
+group by financialHealth
+order by count desc;
