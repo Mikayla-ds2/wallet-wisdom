@@ -506,3 +506,33 @@ where householdType = 'Roommates'
 group by region
 order by count desc;
 
+select * from employment
+join debt on employment.personID = debt.personID
+join discretionary on employment.personID = discretionary.personID
+join demographics on employment.personID = demographics.personID
+
+select * from demographics
+join debt on demographics.personID = debt.personID
+join employment on demographics.personID = employment.personID
+join discretionary on demographics.personID = discretionary.personID
+where (entertainment + hobbies + travel + gifts + donations) > 0
+and (studentloans + ccPayment + personalLoans + medicalDebt) > 0
+
+select ageCategory, avg(entertainment + hobbies + travel + gifts + donations) as averageDiscretionary, avg(studentloans + ccPayment + personalLoans + medicalDebt) as averageDebt from finance
+group by ageCategory
+order by averageDebt desc;
+
+select career, count(career) from finance
+where financialHealth = 'FinanciallyVulnerable'
+group by career
+order by count(career) desc;
+
+select career, avg(ccPayment + personalLoans + medicalDebt) as avgDebt from finance
+where career = 'Healthcare' or career = 'Retail'
+group by career
+order by avgDebt desc;
+
+select career, avg(monthlyIncome) as avgIncome from finance
+where career = 'Healthcare' or career = 'Retail'
+group by career
+order by avgIncome desc;
