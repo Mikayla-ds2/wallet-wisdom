@@ -540,3 +540,11 @@ order by avgIncome desc;
 select financialHealth, count(financialHealth) as count from finance
 group by financialHealth
 order by count desc;
+
+select * from demographics
+
+select region, householdType, householdSize, count(*) as members from finance
+where householdSize = 2
+and householdType = 'DINKS'
+group by region, householdType, householdSize
+having count(*) >= 2
