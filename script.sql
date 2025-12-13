@@ -548,3 +548,24 @@ where householdSize = 2
 and householdType = 'DINKS'
 group by region, householdType, householdSize
 having count(*) >= 2
+
+select distinct(career), avg(monthlyCashFlow) as average from finance
+group by career
+order by average desc;
+
+select personID, age, gender, raceEthnicity, region, householdType, annualIncome, housingStatus, monthlyCashFlow, debtToIncome, financialHealth from finance
+where not region = 'West' and career = 'Engineering'
+order by monthlyCashFlow desc;
+
+select gender, monthlyCashFlow from finance
+order by monthlyCashFlow desc
+limit 20
+
+select gender, count(*) as count from (
+    select gender, monthlyCashFlow from finance
+    order by monthlyCashFlow desc
+    limit 20
+) as topEarners
+GROUP BY gender
+
+select region, avg(debtToIncome) as average from finance
