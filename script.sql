@@ -569,3 +569,17 @@ select gender, count(*) as count from (
 GROUP BY gender
 
 select region, avg(debtToIncome) as average from finance
+
+-- beginning some attempts at window functions to ensure I understand -- 
+select * from finance
+
+-- got this query from chat but it's interesting sooo --
+select personID, gender, region, householdSize, education, monthlyCashFlow, debtToIncome, monthsSaved, 
+avg(monthsSaved) over(PARTITION BY householdSize) as averageMonths,
+monthsSaved - avg(monthsSaved) over (PARTITION BY householdSize) as deltaAverageMonths from finance
+where not financialHealth = 'FinanciallyVulnerable' or financialHealth = 'FinanciallyDistressed'
+order by monthlyCashFlow desc;
+
+select householdSize, avg(monthsSaved) as average from finance
+group by householdSize
+order by average desc;
