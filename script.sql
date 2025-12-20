@@ -583,3 +583,4 @@ order by monthlyCashFlow desc;
 select householdSize, avg(monthsSaved) as average from finance
 group by householdSize
 order by average desc;
+
